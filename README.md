@@ -215,7 +215,6 @@ docker login
 
 3. Build and push with version tag:
 ```bash
-make build VERSION=1.2.3
 make push VERSION=1.2.3
 ```
 
