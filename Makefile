@@ -13,7 +13,7 @@ PLATFORMS = linux/amd64,linux/arm64
 
 # Version handling - prioritize CLI argument, fall back to git tag, finally fall back to default
 DEFAULT_VERSION = 0.1.0
-VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null || echo $(DEFAULT_VERSION))
+VERSION ?= $(shell git describe --tags --abbrev=0 2>/dev/null | sed 's/^v//' || echo $(DEFAULT_VERSION))
 
 # Extract major, minor, patch versions for tagging
 MAJOR_VERSION = $(shell echo $(VERSION) | cut -d. -f1)
