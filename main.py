@@ -9,6 +9,7 @@ from urllib.parse import quote_plus
 import colorama
 from colorama import Fore, Style
 import socket
+from google.oauth2.credentials import Credentials
 
 # Initialize colorama
 colorama.init()
@@ -17,28 +18,28 @@ colorama.init()
 SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
 
 def authenticate():
+    """Gets valid credentials with proper refresh token handling"""
     creds = None
+    token_path = 'data/token.pickle'
+    port = 8080
 
-    # Check if token.pickle exists
-    if os.path.exists('/data/token.pickle'):
+    # Load existing credentials if they exist
+    if os.path.exists(token_path):
         print(f"{Fore.YELLOW}Found existing credentials, attempting to use them...{Style.RESET_ALL}")
-        with open('/data/token.pickle', 'rb') as token:
+        with open(token_path, 'rb') as token:
             creds = pickle.load(token)
 
-    # If there are no (valid) credentials available, prompt the user to log in
+    # If no valid credentials, or if refresh token is missing/expired
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
-            print(f"{Fore.YELLOW}Refreshing expired credentials...{Style.RESET_ALL}")
-            creds.refresh(Request())
-        else:
-            if not os.path.exists('/data/credentials.json'):
-                print(f"{Fore.RED}Error: credentials.json not found. Please make sure you have mounted your data voume correctly.{Style.RESET_ALL}")
-                exit(1)
+            try:
+                creds.refresh(Request())
+            except Exception as e:
+                print(f"{Fore.RED}Error refreshing token: {str(e)}{Style.RESET_ALL}")
+                creds = None
 
-            print(f"{Fore.YELLOW}Starting OAuth authentication flow...{Style.RESET_ALL}")
-            port = 8080
-            print(f"{Fore.CYAN}Using port {port} for OAuth callback server{Style.RESET_ALL}")
-
+        # If refresh failed or no existing creds, do full OAuth flow
+        if not creds:
             flow = InstalledAppFlow.from_client_secrets_file(
                 '/data/credentials.json',
                 SCOPES,
@@ -48,17 +49,18 @@ def authenticate():
             print(f"{Fore.GREEN}Please check your web browser. If no browser opened automatically, please manually visit the URL that will be displayed.{Style.RESET_ALL}")
             creds = flow.run_local_server(
                 port=port,
+                access_type='offline',
                 prompt='consent',
                 success_message='Authentication successful! You may close this window and return to the terminal.',
                 bind_addr="0.0.0.0",
                 open_browser=False,
-                #authorization_prompt_message='Please complete the authentication in your browser.'
             )
             print(f"{Fore.GREEN}Authentication successful!{Style.RESET_ALL}")
 
         # Save the credentials for the next run
         print(f"{Fore.YELLOW}Saving credentials for future use...{Style.RESET_ALL}")
-        with open('/data/token.pickle', 'wb') as token:
+        os.makedirs(os.path.dirname(token_path), exist_ok=True)
+        with open(token_path, 'wb') as token:
             pickle.dump(creds, token)
 
     return creds
