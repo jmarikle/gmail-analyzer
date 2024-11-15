@@ -20,7 +20,7 @@ SCOPES = ['https://www.googleapis.com/auth/gmail.readonly']
 def authenticate():
     """Gets valid credentials with proper refresh token handling"""
     creds = None
-    token_path = 'data/token.pickle'
+    token_path = '/data/token.pickle'
     port = 8080
 
     # Load existing credentials if they exist
