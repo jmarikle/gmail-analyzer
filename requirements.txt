@@ -1,0 +1,4 @@
+google-auth-oauthlib==1.2.1
+google-auth-httplib2==0.1.0
+google-api-python-client==2.86.0
+colorama==0.4.6
